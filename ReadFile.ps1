@@ -1,23 +1,10 @@
-﻿function Read1()
+﻿function Test-Menu()
 {
-    for ($i=1;$i -lt 10;$i++){
-        Get-Content -LiteralPath c:\temp\mappe1.xls -Encoding Byte
-    }
-}
+    [CmdletBinding()]
+    param($filename)
 
-function Read2()
-{
-    for ($i=1;$i -lt 10;$i++){
-        [System.IO.File]::ReadAllBytes("c:\temp\mappe1.xls")
-    }
-}
+    If ($PSBoundParameters['Debug']) {$DebugPreference = 'Continue'}
 
-
-#(Measure-Command {Read1}).Milliseconds
-#(Measure-Command {Read2}).Milliseconds
-
-function Test-Menu($filename)
-{
     $ret = $false
     [byte[]] $b = [System.IO.File]::ReadAllBytes($filename)
     [byte[]] $SIG = 0xD0,0xCF,0x11,0xE0,0xA1,0xB1,0x1A,0xE1
@@ -40,9 +27,54 @@ function Test-Menu($filename)
         $DirSect1 = [System.BitConverter]::ToUInt32($b,0x30)
         $MiniFATSect1 = [System.BitConverter]::ToUInt32($b,0x3C)
         $DiFATSect1 = [System.BitConverter]::ToUInt32($b,0x44)
-        Write-Host $NumDirSects, $NumFATSects, $NumMiniFATSects,$DirSect1,$MiniFATSect1,$DiFATSect1
+
+        $RecordType = [System.BitConverter]::ToUInt16($b,$sectorsize)
+        $BIFF = ""
+        switch ($RecordType)
+        {
+            0x0009 {$BIFF="BIFF2"}
+            0x0209 {$BIFF="BIFF3"}
+            0x0409 {$BIFF="BIFF4"}
+            0x0809 {$BIFF="BIFF5"}
+        }
+
+        $loc = $sectorsize
+        $StartMenuRecs = 0
+        do {
+          $RecWord = [System.BitConverter]::ToUInt16($b,$loc)
+          $loc += 2
+          $LenWord = [System.BitConverter]::ToUInt16($b,$loc)
+          $loc += 2
+          Write-Debug ($RecWord + " " + $LenWord)
+          $loc += $LenWord 
+          if ($RecWord -eq 193) # 193 = MMS
+          {
+            $StartMenuRecs = $loc
+            break
+          }
+        } until ($RecWord -eq 10)
+
+        $MenuEditCount=0
+        if($StartMenuRecs -ne 0)
+        {
+            $loc = $StartMenuRecs
+            do
+            {
+                $RecWord = [System.BitConverter]::ToUInt16($b,$loc)
+                $loc += 2
+                $LenWord = [System.BitConverter]::ToUInt16($b,$loc)
+                $loc += 2
+                Write-Debug ($RecWord + " " + $LenWord)
+                $loc += $LenWord
+                if ($RecWord -eq 194 -or $RecWord -eq 195) { $MenuEditCount++ }
+
+            } while ($RecWord -eq 194 -or $RecWord -eq 195)
+        }
+        return ($MenuEditCount -gt 0)
     }
     return $ret
 }
 
-Test-Menu "c:\temp\mappe1.xls"
+
+
+Test-Menu "c:\temp\mappe1.xls" -Debug
