@@ -11,7 +11,7 @@ function Test-Menu()
     [byte[]] $x=$b[0..7]
     if([Linq.Enumerable]:: SequenceEqual($x, $SIG))
     {
-        Write-Debug $b[0x1E] # Sector Size   
+        Write-Debug "Sector Size: $($b[0x1E])"   
         if($b[0x1E] -eq 9)
         {
             $sectorsize = 512
@@ -38,7 +38,10 @@ function Test-Menu()
 
         #$t=[System.BitConverter]::ToString($WB)
         
-        if (!$WorkbookFound) { return $false }
+        if (!$WorkbookFound) { 
+            Write-Debug "Workbook substream not found!"
+            return $false
+        }
 
         $BIFFStart = ([System.BitConverter]::ToUInt32($b,$WorkbookEntry + 116) + 1) * $sectorsize
 
