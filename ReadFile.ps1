@@ -45,7 +45,7 @@
           $loc += 2
           $LenWord = [System.BitConverter]::ToUInt16($b,$loc)
           $loc += 2
-          Write-Debug ($RecWord + " " + $LenWord)
+          Write-Debug ($RecWord.ToString() + " " + $LenWord.ToString())
           $loc += $LenWord 
           if ($RecWord -eq 193) # 193 = MMS
           {
@@ -64,7 +64,7 @@
                 $loc += 2
                 $LenWord = [System.BitConverter]::ToUInt16($b,$loc)
                 $loc += 2
-                Write-Debug ($RecWord + " " + $LenWord)
+                Write-Debug ($RecWord.ToString() + " " + $LenWord.ToString())
                 $loc += $LenWord
                 if ($RecWord -eq 194 -or $RecWord -eq 195) { $MenuEditCount++ }
 
