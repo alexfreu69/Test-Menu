@@ -30,15 +30,20 @@ function Test-Menu()
         $DiFATSect1 = [System.BitConverter]::ToUInt32($b,0x44)
 
         $DirectoryEntries = ($DirSect1 + 1) * $sectorsize
-        $WorkbookEntry = $DirectoryEntries + 128 # 2nd Entry should be \Root Entry\Workbook
+        $WorkbookEntry = $DirectoryEntries + 128 # 2nd Entry should be \Root Entry\Workbook or Book
         [byte[]] $WB = $b[$WorkbookEntry..($WorkbookEntry+15)]
+        [byte[]] $OLDWB = $b[$WorkbookEntry..($WorkbookEntry+7)]
         [byte[]] $WBSIG = 0x57,0x00,0x6F,0x00,0x72,0x00,0x6B,0x00,0x62,0x00,0x6F,0x00,0x6F,0x00,0x6B,0x00
+        [byte[]] $OLDSIG = 0x42,0x00,0x6F,0x00,0x6F,0x00,0x6B,0x00
 
         $WorkbookFound = [Linq.Enumerable]::SequenceEqual($WB, $WBSIG)
+        $OldWorkbookFound = [Linq.Enumerable]::SequenceEqual($OLDWB, $OLDSIG)
 
         #$t=[System.BitConverter]::ToString($WB)
+
+        Write-Debug $OldWorkbookFound
         
-        if (!$WorkbookFound) { 
+        if (!$WorkbookFound -and !$OldWorkbookFound) { 
             Write-Debug "Workbook substream not found!"
             return $false
         }
