@@ -87,13 +87,20 @@ function Test-Menu()
             # Write-Debug "FAT: $FAT"
             Write-Debug "Assembling Workbook Stream ..."
 
+            [byte[]] $BIFFStream = [byte[]]::new([Math]::Ceiling($WBStreamSize / $sectorsize)*$Sectorsize)
+
             [uint32] $nextp = $WBStreamStartSect
+            $n=0
             do
             {
                 [uint32] $p = [uint32] $nextp
                 [uint32] $nextp = [System.BitConverter]::ToUInt32($FAT,$p * 4)
                 # Write-Debug "Sector: $p $nextp"
-                $BIFFStream += $b[(($p+1)*$sectorsize)..(($p+2)*$sectorsize-1)]
+                [byte[]]$arr=$b[(($p+1)*$sectorsize)..(($p+2)*$sectorsize-1)]
+                #$BIFFStream += $b[(($p+1)*$sectorsize)..(($p+2)*$sectorsize-1)] # Slow!!!
+                $arr.CopyTo($BIFFStream,$n)
+                $n+=$sectorsize
+
             }
             until ([uint32]$nextp -eq [uint32]"0xFFFFFFFE")
 
@@ -211,6 +218,6 @@ function Test-Menu()
 
 
 
-Test-Menu "C:\TEMP\CS0024669\test2.XLS" -Debug 
+Test-Menu "C:\TEMP\CS0024669\test5.XLS" -Debug 
 
 
