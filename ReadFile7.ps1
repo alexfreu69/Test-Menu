@@ -95,19 +95,23 @@ function Test-Menu()
             $n=0
             for ($i=0;$i -lt ($NumFATSects-109);$i++)
             {
-                $DiFATEntry = [System.BitConverter]::ToUInt32($b,$DiFATStart+4*($i % 127))
+                [uint32] $DiFATEntry = [System.BitConverter]::ToUInt32($b,$DiFATStart+4*($i % 127))
 
-                #Write-Debug "$DiFATEntry"
+                Write-Debug "DiFATEntry: $($i % 127) $([uint32]$DiFATEntry)"
+
                 $FATStart = ($DiFATEntry + 1 ) * $sectorsize
                 $FAT += $b[$FATstart..($FATStart+$sectorsize-1)]
+
                 $n++
-                if($n -gt 126)
+                if ($n -eq 127)
                 {
-                    $DiFATStart=[System.BitConverter]::ToUInt32($b,$DiFATStart+4*127)
-                    $n = 0
+                    [uint32] $DiFATSector=[System.BitConverter]::ToUInt32($b,$DiFATStart+$Sectorsize-4)
+                    Write-Debug "Next DiFATSector: $([uint32]$DiFATSector)"
+                    $DiFATStart = ($DiFATSector + 1) * $Sectorsize
+                    Write-Debug "Next DiFATStart: $([string]::Format("0x{0:x}", $DiFATStart))"
+                    $n=0
                 }
             }
-
         }
 
 
